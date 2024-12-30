@@ -1,20 +1,14 @@
 import numpy as np
 import cdflib
 import png
+import wic_look_angle
 
 cdf = cdflib.CDF("im_k0_wic_20010913_v01.cdf")
 
-cdf_vars = ["WIC_PIXELS", "EPOCH", "RADIUS", "ORB_X", "ORB_Y", "ORB_Z", "VFOV"]
+cdf_vars = ["WIC_PIXELS", "EPOCH", "ORB_X", "ORB_Y", "ORB_Z", "VFOV", "SV_X", "SV_Y", "SV_Z", "SCSV_X", "SCSV_Y", "SCSV_Z", "SPINPHASE", "INST_AZIMUTH", "INST_CO_ELEVATION", "INST_ROLL"]
 data = {}
 for var in cdf_vars:
     data[var] = cdf.varget(var)
-
-def cart2polar(x, y, z):
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-    theta = np.arccos(z / r)
-    phi = np.arccos(x / (np.sqrt(x ** 2 + y ** 2)))
-
-    return r, theta, phi
 
 earth_radius = 6371
 
@@ -23,28 +17,52 @@ wic_pixels = data["WIC_PIXELS"]
 wic_pixels = np.vectorize(lambda p: 1 if p < 1 else p)(wic_pixels)
 
 fov = np.deg2rad(data["VFOV"])
-fov_vector = np.array([
-    np.cos(fov) * np.sin(fov),
-    np.sin(fov),
-    np.cos(fov) ** 2
-])
+
+offset = np.deg2rad(np.array([
+    data["INST_AZIMUTH"],
+    data["INST_CO_ELEVATION"],
+    data["INST_ROLL"]
+]))
 
 for i in range(wic_pixels.shape[0]):
     pos = np.array([data["ORB_X"][i], data["ORB_Y"][i], data["ORB_Z"][i]])
-    #pos = np.array([0, 7000, 20000])
+    #pos = np.array([0, 7000, 30000])
 
     # c is constant per pixel
     c = np.dot(pos, pos) - (earth_radius ** 2)
 
-    centre_dir = -pos / np.sqrt(np.dot(pos, pos))
-    
+    scsv = np.array([
+        data["SCSV_X"][i],
+        data["SCSV_Y"][i],
+        data["SCSV_Z"][i]
+    ])
+    sc = np.array([
+        data["SV_X"][i],
+        data["SV_Y"][i],
+        data["SV_Z"][i]
+    ])
+    psi = np.deg2rad(data["SPINPHASE"][i])
+
+    matrix = wic_look_angle.transformation_matrix(offset, scsv, sc, psi)
+    centre_dir = np.matmul(matrix, np.array([0, 0, -1]))
+    #centre_dir = -pos / np.linalg.norm(pos)
+
+    u = np.cross(centre_dir, np.array([1, 0, 0]))
+    u /= np.linalg.norm(u)
+
+    w = np.cross(centre_dir, u)
+    w /= np.linalg.norm(w)
+
     current_image = wic_pixels[i]
     pixel_locs = np.zeros((current_image.shape[0], current_image.shape[1], 3))
 
     for x in range(current_image.shape[0]):
         for y in range(current_image.shape[1]):
-            pixel_offset = np.array([x / current_image.shape[0] - 0.5, 1, y / current_image.shape[1] - 0.5])
-            direction = pixel_offset * fov_vector + centre_dir
+            offset_x = (x / current_image.shape[0] - 0.5) * fov
+            offset_y = (y / current_image.shape[1] - 0.5) * fov
+            #print(centre_dir, np.rad2deg(offset_x), np.rad2deg(offset_y))
+
+            direction = offset_x * u + offset_y * w + centre_dir
 
             a = np.dot(direction, direction)
             b = 2 * np.dot(pos, direction)
