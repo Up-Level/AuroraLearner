@@ -26,7 +26,7 @@ def transformation_matrix(offset, scsv, sc, psi):
     sin_alp = scsv[1] / sqrt_term
     cos_alp = scsv[2] / sqrt_term
     sin_bet = scsv[0]
-    cos_bet = sqrt(1 - scsv[0] ** 2)
+    cos_bet = sqrt_term
 
     t2a = np.array([
         [1, 0, 0],
