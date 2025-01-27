@@ -1,6 +1,7 @@
 import numpy as np
 import cdflib
 import png
+import time
 
 from wic_look_angle import transformation_matrix
 
@@ -48,6 +49,7 @@ for i in range(wic_pixels.shape[0]):
         data["SV_Y"][i],
         data["SV_Z"][i]
     ])
+    
     psi = np.deg2rad(data["SPINPHASE"][i])
 
     matrix = transformation_matrix(offset, scsv, sc, psi)
