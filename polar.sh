@@ -3,8 +3,8 @@ python -u motionrnn/run.py \
     --is_training 1 \
     --device cuda \
     --dataset_name polar \
-    --train_data_paths ./polar/train \
-    --valid_data_paths ./polar/test \
+    --train_data_paths ./polar/images/train \
+    --valid_data_paths ./polar/images/test \
     --save_dir checkpoints/polar \
     --gen_frm_dir results/polar \
     --model_name MotionRNN_PredRNN \
@@ -12,7 +12,7 @@ python -u motionrnn/run.py \
     --img_height 64 \
     --img_width 64 \
     --img_channel 1 \
-    --input_length 5 \
+    --input_length 3 \
     --total_length 5 \
     --num_hidden 64,64,64,64 \
     --filter_size 5 \
@@ -24,7 +24,7 @@ python -u motionrnn/run.py \
     --sampling_start_value 1.0 \
     --sampling_changing_rate 0.00002 \
     --lr 0.0003 \
-    --batch_size 64 \
+    --batch_size 32 \
     --max_iterations 1000 \
     --display_interval 100 \
     --test_interval 100 \

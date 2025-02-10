@@ -60,9 +60,9 @@ args = parser.parse_args()
 print(args)
 
 
-def schedule_sampling(eta, itr):
+def schedule_sampling(eta, itr, batch_shape):
     zeros = np.zeros((args.batch_size,
-                      args.total_length - args.input_length - 1,
+                      batch_shape[1],
                       args.img_width // args.patch_size,
                       args.img_width // args.patch_size,
                       args.patch_size ** 2 * args.img_channel))
@@ -74,7 +74,7 @@ def schedule_sampling(eta, itr):
     else:
         eta = 0.0
     random_flip = np.random.random_sample(
-        (args.batch_size, args.total_length - args.input_length - 1))
+        (args.batch_size, batch_shape[1]))
     true_token = (random_flip < eta)
     ones = np.ones((args.img_width // args.patch_size,
                     args.img_width // args.patch_size,
@@ -84,7 +84,7 @@ def schedule_sampling(eta, itr):
                       args.patch_size ** 2 * args.img_channel))
     real_input_flag = []
     for i in range(args.batch_size):
-        for j in range(args.total_length - args.input_length - 1):
+        for j in range(batch_shape[1]):
             if true_token[i, j]:
                 real_input_flag.append(ones)
             else:
@@ -92,7 +92,7 @@ def schedule_sampling(eta, itr):
     real_input_flag = np.array(real_input_flag)
     real_input_flag = np.reshape(real_input_flag,
                                  (args.batch_size,
-                                  args.total_length - args.input_length - 1,
+                                  batch_shape[1],
                                   args.img_width // args.patch_size,
                                   args.img_width // args.patch_size,
                                   args.patch_size ** 2 * args.img_channel))
@@ -115,7 +115,7 @@ def train_wrapper(model):
         ims = train_input_handle.get_batch()
         ims = preprocess.reshape_patch(ims, args.patch_size)
 
-        eta, real_input_flag = schedule_sampling(eta, itr)
+        eta, real_input_flag = schedule_sampling(eta, itr, ims.shape)
 
         trainer.train(model, ims, real_input_flag, args, itr)
 

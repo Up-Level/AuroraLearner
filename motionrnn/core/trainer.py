@@ -29,7 +29,7 @@ def test(model, test_input_handle, configs, itr):
     img_mse, ssim = [], []
     csi20, csi30, csi40, csi50 = [], [], [], []
 
-    for i in range(configs.total_length - configs.input_length):
+    for i in range(test_input_handle.total_length - configs.input_length):
         img_mse.append(0)
         ssim.append(0)
         if configs.dataset_name == 'echo' or configs.dataset_name == 'guangzhou':
@@ -42,7 +42,7 @@ def test(model, test_input_handle, configs, itr):
 
     real_input_flag = np.zeros(
         (configs.batch_size,
-         configs.total_length - mask_input - 1,
+         test_input_handle.total_length - mask_input - 1,
          configs.img_width // configs.patch_size,
          configs.img_width // configs.patch_size,
          configs.patch_size ** 2 * configs.img_channel))
@@ -55,7 +55,7 @@ def test(model, test_input_handle, configs, itr):
         img_gen = model.test(test_dat, real_input_flag)
 
         img_gen = preprocess.reshape_patch_back(img_gen, configs.patch_size)
-        output_length = configs.total_length - configs.input_length
+        output_length = test_input_handle.total_length - configs.input_length
         img_gen_length = img_gen.shape[1]
         img_out = img_gen[:, -output_length:]
 
@@ -77,14 +77,14 @@ def test(model, test_input_handle, configs, itr):
                 csi50[i] += metrics.cal_csi(pred_frm, real_frm, 50)
 
             for b in range(configs.batch_size):
-                score, _ = structural_similarity(pred_frm[b], real_frm[b], full=True, multichannel=True)
+                score = structural_similarity(pred_frm[b], real_frm[b], channel_axis=5)
                 ssim[i] += score
 
         # save prediction examples
         if batch_id <= configs.num_save_samples:
             path = os.path.join(res_path, str(batch_id))
             os.mkdir(path)
-            for i in range(configs.total_length):
+            for i in range(test_input_handle.total_length):
                 name = 'gt' + str(i + 1) + '.png'
                 file_name = os.path.join(path, name)
                 img_gt = np.uint8(test_ims[0, i, :, :, :] * 255)
@@ -101,12 +101,12 @@ def test(model, test_input_handle, configs, itr):
 
     avg_mse = avg_mse / (batch_id * configs.batch_size)
     print('mse per seq: ' + str(avg_mse))
-    for i in range(configs.total_length - configs.input_length):
+    for i in range(test_input_handle.total_length - configs.input_length):
         print(img_mse[i] / (batch_id * configs.batch_size))
 
     ssim = np.asarray(ssim, dtype=np.float32) / (configs.batch_size * batch_id)
     print('ssim per frame: ' + str(np.mean(ssim)))
-    for i in range(configs.total_length - configs.input_length):
+    for i in range(test_input_handle.total_length - configs.input_length):
         print(ssim[i])
 
     if configs.dataset_name == 'echo' or configs.dataset_name == 'guangzhou':
@@ -115,14 +115,14 @@ def test(model, test_input_handle, configs, itr):
         csi40 = np.asarray(csi40, dtype=np.float32) / batch_id
         csi50 = np.asarray(csi50, dtype=np.float32) / batch_id
         print('csi20 per frame: ' + str(np.mean(csi20)))
-        for i in range(configs.total_length - configs.input_length):
+        for i in range(test_input_handle.total_length - configs.input_length):
             print(csi20[i])
         print('csi30 per frame: ' + str(np.mean(csi30)))
-        for i in range(configs.total_length - configs.input_length):
+        for i in range(test_input_handle.total_length - configs.input_length):
             print(csi30[i])
         print('csi40 per frame: ' + str(np.mean(csi40)))
-        for i in range(configs.total_length - configs.input_length):
+        for i in range(test_input_handle.total_length - configs.input_length):
             print(csi40[i])
         print('csi50 per frame: ' + str(np.mean(csi50)))
-        for i in range(configs.total_length - configs.input_length):
+        for i in range(test_input_handle.total_length - configs.input_length):
             print(csi50[i])

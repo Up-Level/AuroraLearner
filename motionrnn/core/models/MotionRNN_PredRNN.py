@@ -57,7 +57,7 @@ class RNN(nn.Module):
         self.conv_last = nn.Conv2d(num_hidden[num_layers - 1], self.patch_ch, 1, stride=1, padding=0, bias=False)
         self.conv_first_v = nn.Conv2d(self.patch_ch, num_hidden[0], 1, stride=1, padding=0, bias=False)
 
-    def forward(self, all_frames, mask_true):
+    def forward(self, all_frames: torch.Tensor, mask_true):
         # [batch, length, height, width, channel] -> [batch, length, channel, height, width]
         frames = all_frames.permute(0, 1, 4, 2, 3).contiguous()
         mask_true = mask_true.permute(0, 1, 4, 2, 3).contiguous()
@@ -98,7 +98,7 @@ class RNN(nn.Module):
         nn.init.xavier_normal_(mem)
         nn.init.xavier_normal_(motion_highway)
 
-        for t in range(self.configs.total_length - 1):
+        for t in range(all_frames.size(dim=1) - 1):
             if t < self.configs.input_length:
                 net = frames[:, t]
             else:
