@@ -1,6 +1,7 @@
 **/__pycache__
 **/*.cdf
 **/*.npz
+**/*.csv
 images
 latlon
 cart
