@@ -77,7 +77,7 @@ def test(model, test_input_handle, configs, itr):
                 csi50[i] += metrics.cal_csi(pred_frm, real_frm, 50)
 
             for b in range(configs.batch_size):
-                score = structural_similarity(pred_frm[b], real_frm[b], channel_axis=5)
+                score = structural_similarity(pred_frm[b], real_frm[b], channel_axis=-1)
                 ssim[i] += score
 
         # save prediction examples

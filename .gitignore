@@ -2,6 +2,7 @@
 **/*.cdf
 **/*.npz
 **/*.csv
+**/*.gif
 images
 latlon
 cart

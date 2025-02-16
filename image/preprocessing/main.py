@@ -1,7 +1,6 @@
 import numpy as np
 import cdflib
-import png
-import time
+from PIL import Image
 
 from wic_look_angle import transformation_matrix
 
@@ -11,7 +10,7 @@ def cartToLatLon(coords):
         np.pi/2 - np.arctan2(coords[1], coords[0])
     ])
 
-cdf = cdflib.CDF("im_k0_wic_20010913_v01.cdf")
+cdf = cdflib.CDF("image/preprocessing/im_k0_wic_20010913_v01.cdf")
 
 cdf_vars = ["WIC_PIXELS", "EPOCH", "ORB_X", "ORB_Y", "ORB_Z", "VFOV", "SV_X", "SV_Y", "SV_Z", "SCSV_X", "SCSV_Y", "SCSV_Z", "SPINPHASE", "INST_AZIMUTH", "INST_CO_ELEVATION", "INST_ROLL"]
 data = {}
@@ -82,13 +81,13 @@ for i in range(wic_pixels.shape[0]):
                 pixel_cart[x][y] = pos + root * direction
                 pixel_latlon[x][y] = np.array([0, *cartToLatLon(pixel_cart[x][y])])
                 
-    image_cart = ((pixel_cart - pixel_cart.min()) / (pixel_cart.max() - pixel_cart.min() + 0.00001) * 255).astype(int)
-    image_cart = image_cart.reshape((image_cart.shape[0], image_cart.shape[1] * image_cart.shape[2]))
+    image_cart = ((pixel_cart - pixel_cart.min()) / (pixel_cart.max() - pixel_cart.min() + 0.00001) * 255).astype(np.uint8)
+    #image_cart = image_cart.reshape((image_cart.shape[0], image_cart.shape[1] * image_cart.shape[2]))
 
-    image_latlon = ((pixel_latlon - pixel_latlon.min()) / (pixel_latlon.max() - pixel_latlon.min() + 0.00001) * 255).astype(int)
-    image_latlon = image_latlon.reshape((image_latlon.shape[0], image_latlon.shape[1] * image_latlon.shape[2]))
+    image_latlon = ((pixel_latlon - pixel_latlon.min()) / (pixel_latlon.max() - pixel_latlon.min() + 0.00001) * 255).astype(np.uint8)
+    #image_latlon = image_latlon.reshape((image_latlon.shape[0], image_latlon.shape[1] * image_latlon.shape[2]))
 
-    image = ((current_image - current_image.min()) / (current_image.max() - current_image.min() + 0.00001) * 255).astype(int)
+    image = ((current_image - current_image.min()) / (current_image.max() - current_image.min() + 0.00001) * 255).astype(np.uint8)
 
     print(f"""{i}
 pos: {pos}
@@ -96,13 +95,7 @@ cart: {pixel_cart.min()} {pixel_cart.max()} image cart: {image_cart.min()} {imag
 latlon: {pixel_latlon.min()} {pixel_latlon.max()} image latlon: {image_latlon.min()} {image_latlon.max()}
 wic: {current_image.min()} {current_image.max()} image wic: {image.min()} {image.max()}
 """)
-
-    writer = png.Writer(256, 256, greyscale=False)
-    writer_gs = png.Writer(256, 256, greyscale=True)
-
-    with open(f"cart/{i}.png", "wb") as file:
-        writer.write(file, image_cart.tolist())
-    with open(f"latlon/{i}.png", "wb") as file:
-        writer.write(file, image_latlon.tolist())
-    with open(f"images/{i}.png", "wb") as file:
-        writer_gs.write(file, image.tolist())
+    
+    Image.fromarray(image_cart, "RGB").save(f"image/preprocessing/cart/{i}.png")
+    Image.fromarray(image_latlon, "RGB").save(f"image/preprocessing/latlon/{i}.png")
+    Image.fromarray(image, "L").save(f"image/preprocessing/images/{i}.png")
