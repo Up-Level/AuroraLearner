@@ -96,9 +96,43 @@ def process_images():
     
     return np.array(sequences, dtype=object), np.array(timestamps, dtype=object)
 
+def combine(indices, sequences, timestamps, size_plot, plot_index_names, dataset_name):
+    dataset = list()
+
+    plot_indices = np.zeros((len(plot_index_names), indices["Date_UTC"].shape[0]))
+    for i, name in enumerate(plot_index_names):
+        plot_indices[i] = indices[name]
+
+    for i in range(sequences.shape[0]):
+        dataset.append(np.zeros((sequences[i].shape[0], IMAGE_SIZE + PLOT_HEIGHT, IMAGE_SIZE + PLOT_HEIGHT), np.uint8))
+        # Finds the values in indices which are closest to the timestamps of the images in the sequence
+        closest_indices = np.searchsorted(indices["Date_UTC"], timestamps[i])
+        for j in range(sequences[i].shape[0]):
+            closest_index = closest_indices[j]
+            start_index = max(closest_index - size_plot, 0)
+
+            graph = plot_image(
+                indices["Date_UTC"][start_index:closest_index],
+                plot_indices[:, start_index:closest_index],
+                y_size=PLOT_HEIGHT
+            )
+            graph = np.pad(graph, [(0, IMAGE_SIZE + PLOT_HEIGHT - (closest_index-start_index)), (0, 0)])
+            sequence = np.pad(sequences[i][j], [(0, PLOT_HEIGHT), (0, 0)])
+
+            dataset[i][j] = np.concatenate([sequence, graph], axis=1).T
+            #Image.fromarray(dataset[i][j], "L").save(f"polar/images/{i}_{j}.png")
+        
+        print(f"{i + 1}/{sequences.shape[0]} - {(i + 1) * 100 // sequences.shape[0]}%")
+    
+    dataset = np.array(dataset, dtype=object)
+    train_index = int(dataset.shape[0] * TRAIN_FRAC)
+    np.random.shuffle(dataset)
+    np.savez_compressed(f"polar/datasets/{dataset_name}-train.npz", dataset[:train_index])
+    np.savez_compressed(f"polar/datasets/{dataset_name}-test.npz",  dataset[ train_index:dataset.shape[0]])
+
 def main():
     if len(sys.argv) < 2:
-        print("1 argument required. Valid arguments are 'indices' or 'images'.")
+        print("1 argument required. Valid arguments are 'indices', 'images' or 'combine'.")
         return
 
     match sys.argv[1]:
@@ -106,42 +140,31 @@ def main():
             indices = process_indices()
             np.savez_compressed("polar/indices.npz", **indices)
         case "images":
-            indices: dict = np.load("polar/indices.npz")
             sequences, timestamps = process_images()
+            np.savez_compressed("polar/images.npz", sequences=sequences, timestamps=timestamps)
+        case "combine":
+            indices: dict = np.load("polar/indices.npz")
+            image_data: dict = np.load("polar/images.npz", allow_pickle=True)
+            sequences = image_data["sequences"]
+            timestamps = image_data["timestamps"]
 
             try:
                 size_plot = int(sys.argv[2])
             except:
                 size_plot = IMAGE_SIZE - 1
-
-            dataset = list()
-
-            for i in range(sequences.shape[0]):
-                dataset.append(np.zeros((sequences[i].shape[0], IMAGE_SIZE + PLOT_HEIGHT, IMAGE_SIZE + PLOT_HEIGHT), np.uint8))
-                for j in range(sequences[i].shape[0]):
-                    # Finds the values in indices which are closest to the timestamp of the image
-                    closest_index = np.argmin(np.abs(timestamps[i][j] - indices["Date_UTC"])) + 1
-                    start_index = max(closest_index - size_plot, 0)
-
-                    graph = plot_image(indices["Date_UTC"][start_index:closest_index],
-                                       np.array([indices["SML"]])[:, start_index:closest_index],
-                                       y_size=PLOT_HEIGHT)
-                    graph = np.pad(graph, [(0, IMAGE_SIZE + PLOT_HEIGHT - (closest_index-start_index)), (0, 0)])
-
-                    sequence = np.pad(sequences[i][j], [(0, PLOT_HEIGHT), (0, 0)])
-
-                    dataset[i][j] = np.concatenate([sequence, graph], axis=1).T
-                    Image.fromarray(dataset[i][j], "L").save(f"polar/images/{i}_{j}.png")
-                
-                print(f"{i + 1}/{sequences.shape[0]} - {(i + 1) * 100 // sequences.shape[0]}%")
             
-            dataset = np.array(dataset, dtype=object)
-            train_index = int(dataset.shape[0] * TRAIN_FRAC)
-            np.random.shuffle(dataset)
-            np.savez_compressed("polar/dataset-train.npz", dataset[:train_index])
-            np.savez_compressed("polar/dataset-test.npz",  dataset[ train_index:dataset.shape[0]])
+            combine_args = (indices, sequences, timestamps, size_plot)
+
+            print("SML 1/4")
+            combine(*combine_args, ["SML"], "sml")
+            print("SML/SMU 2/4")
+            combine(*combine_args, ["SML", "SMU"], "sml-smu")
+            print("Bz 3/4")
+            combine(*combine_args, ["GSE_Bz"], "bz")
+            print("IMF 4/4")
+            combine(*combine_args, ["GSE_Bx", "GSE_By", "GSE_Bz"], "imf")
         case _:
-            print("Invalid argument. Valid arguments are 'indices' or 'images'.")
+            print("Invalid argument. Valid arguments are 'indices', 'images' or 'combine'.")
 
 if __name__ == "__main__":
     main()
