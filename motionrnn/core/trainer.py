@@ -3,23 +3,27 @@ import datetime
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity
+from torch.utils.tensorboard import SummaryWriter
 from core.utils import metrics
 from core.utils import preprocess
 
 
-def train(model, ims, real_input_flag, configs, itr):
+def train(model, ims, real_input_flag, configs, itr, writer: SummaryWriter):
     cost = model.train(ims, real_input_flag)
     if configs.reverse_input:
         ims_rev = np.flip(ims, axis=1).copy()
         cost += model.train(ims_rev, real_input_flag)
         cost = cost / 2
+    
+    writer.add_scalar("Loss/train", cost, itr)
 
     if itr % configs.display_interval == 0:
         print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'itr: ' + str(itr))
         print('training loss: ' + str(cost))
+        writer.flush()
 
 
-def test(model, test_input_handle, configs, itr):
+def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
     print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'itr: ' + str(itr))
     test_input_handle.begin(do_shuffle=False)
     res_path = os.path.join(configs.gen_frm_dir, str(itr))
@@ -97,6 +101,13 @@ def test(model, test_input_handle, configs, itr):
                 img_pd = np.minimum(img_pd, 1)
                 img_pd = np.uint8(img_pd * 255)
                 cv2.imwrite(file_name, img_pd)
+        
+            # Join first few known frames with predicted frames
+            total_img = np.concatenate([test_ims[:, :configs.input_length], img_gen], axis=1)
+            # Transform to RGB and reorder axes to required format
+            video = total_img.repeat(3, axis=-1).transpose([0, 1, 4, 2, 3])
+            writer.add_video("Pred/test", video, itr, fps=0.001)
+
         test_input_handle.next()
 
     avg_mse = avg_mse / (batch_id * configs.batch_size)
@@ -126,3 +137,6 @@ def test(model, test_input_handle, configs, itr):
         print('csi50 per frame: ' + str(np.mean(csi50)))
         for i in range(test_input_handle.total_length - configs.input_length):
             print(csi50[i])
+    
+    writer.add_scalar("Loss/test", avg_mse, itr)
+    writer.add_scalar("SSIM/test", np.mean(ssim), itr)

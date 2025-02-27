@@ -8,6 +8,7 @@ import math
 from core.data_provider import datasets_factory
 from core.models.model_factory import Model
 from core.utils import preprocess
+from torch.utils.tensorboard import SummaryWriter
 import core.trainer as trainer
 
 # -----------------------------------------------------------------------------
@@ -57,8 +58,7 @@ parser.add_argument('--num_save_samples', type=int, default=10)
 parser.add_argument('--n_gpu', type=int, default=1)
 
 args = parser.parse_args()
-print(args)
-
+writer = SummaryWriter()
 
 def schedule_sampling(eta, itr, batch_shape):
     zeros = np.zeros((args.batch_size,
@@ -117,15 +117,17 @@ def train_wrapper(model):
 
         eta, real_input_flag = schedule_sampling(eta, itr, ims.shape)
 
-        trainer.train(model, ims, real_input_flag, args, itr)
+        trainer.train(model, ims, real_input_flag, args, itr, writer)
 
         if itr % args.snapshot_interval == 0:
             model.save(itr)
 
         if itr % args.test_interval == 0:
-            trainer.test(model, test_input_handle, args, itr)
+            trainer.test(model, test_input_handle, args, itr, writer)
 
         train_input_handle.next()
+
+    writer.flush()
 
 
 def test_wrapper(model):
@@ -133,7 +135,7 @@ def test_wrapper(model):
     test_input_handle = datasets_factory.data_provider(
         args.dataset_name, args.train_data_paths, args.valid_data_paths, args.batch_size, args.img_width,
         seq_length=args.total_length, is_training=False)
-    trainer.test(model, test_input_handle, args, 'test_result')
+    trainer.test(model, test_input_handle, args, 'test_result', writer)
 
 
 if os.path.exists(args.save_dir):
@@ -154,3 +156,5 @@ if args.is_training:
     train_wrapper(model)
 else:
     test_wrapper(model)
+
+writer.close()
