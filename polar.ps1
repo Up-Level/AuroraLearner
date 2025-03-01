@@ -3,10 +3,10 @@ python -u motionrnn/run.py `
     --is_training 1 `
     --device cuda `
     --dataset_name polar2 `
-    --train_data_paths ./polar/dataset-train.npz `
-    --valid_data_paths ./polar/dataset-test.npz `
-    --save_dir checkpoints/polar `
-    --gen_frm_dir results/polar `
+    --train_data_paths ./polar/datasets/all-train.npz `
+    --valid_data_paths ./polar/datasets/all-test.npz `
+    --save_dir checkpoints/polar/all `
+    --gen_frm_dir results/polar/all `
     --model_name MotionRNN_PredRNN `
     --reverse_input 1 `
     --img_height 136 `
@@ -25,7 +25,7 @@ python -u motionrnn/run.py `
     --sampling_changing_rate 0.00002 `
     --lr 0.0003 `
     --batch_size 32 `
-    --max_iterations 10000 `
+    --max_iterations 1000 `
     --display_interval 100 `
     --test_interval 100 `
     --snapshot_interval 100

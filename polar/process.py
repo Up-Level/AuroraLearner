@@ -89,6 +89,7 @@ def process_images():
             sequence[i] = np.array(image.getdata(0)).reshape(IMAGE_SIZE, IMAGE_SIZE)
             image.close()
 
+            # Convert date to unix epoch
             seq_timestamps[i] = time.mktime(time.strptime(image_file, "%Y%m%d_%H%M%S_a.gif"))
         
         sequences.append(sequence)
@@ -155,14 +156,18 @@ def main():
             
             combine_args = (indices, sequences, timestamps, size_plot)
 
-            print("SML 1/4")
+            print("SML 1/6")
             combine(*combine_args, ["SML"], "sml")
-            print("SML/SMU 2/4")
+            print("SML/SMU 2/6")
             combine(*combine_args, ["SML", "SMU"], "sml-smu")
-            print("Bz 3/4")
+            print("Bz 3/6")
             combine(*combine_args, ["GSE_Bz"], "bz")
-            print("IMF 4/4")
+            print("IMF 4/6")
             combine(*combine_args, ["GSE_Bx", "GSE_By", "GSE_Bz"], "imf")
+            print("Solar Wind 5/6")
+            combine(*combine_args, ["GSE_Vx", "GSE_Vy"], "wind")
+            print("All 6/6")
+            combine(*combine_args, ['SML', 'SMU', 'GSE_Bx', 'GSE_By', 'GSE_Bz', 'GSE_Vx', 'GSE_Vy', 'GSE_Vz', 'CLOCK_ANGLE_GSE'], "all")
         case _:
             print("Invalid argument. Valid arguments are 'indices', 'images' or 'combine'.")
 

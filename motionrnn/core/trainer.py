@@ -32,6 +32,8 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
     batch_id = 0
     img_mse, ssim = [], []
     csi20, csi30, csi40, csi50 = [], [], [], []
+    ssim_img = 0
+    ssim_plot = 0
 
     for i in range(test_input_handle.total_length - configs.input_length):
         img_mse.append(0)
@@ -84,6 +86,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 score = structural_similarity(pred_frm[b], real_frm[b], channel_axis=-1)
                 ssim[i] += score
 
+                ssim_img += structural_similarity(pred_frm[b, :120, :120], real_frm[b, :120, :120], channel_axis=-1)
+                ssim_plot += structural_similarity(pred_frm[b, 120:, :120], real_frm[b, 120:, :120], channel_axis=-1)
+
         # save prediction examples
         if batch_id <= configs.num_save_samples:
             path = os.path.join(res_path, str(batch_id))
@@ -106,7 +111,7 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
             total_img = np.concatenate([test_ims[:, :configs.input_length], img_gen], axis=1)
             # Transform to RGB and reorder axes to required format
             video = total_img.repeat(3, axis=-1).transpose([0, 1, 4, 2, 3])
-            writer.add_video("Pred/test", video, itr, fps=0.001)
+            writer.add_video(f"Prediction/test/{batch_id}", video, itr, fps=0.001)    
 
         test_input_handle.next()
 
@@ -138,5 +143,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
         for i in range(test_input_handle.total_length - configs.input_length):
             print(csi50[i])
     
+    num_frames = batch_id * configs.batch_size * (configs.total_length - configs.input_length)
+
     writer.add_scalar("Loss/test", avg_mse, itr)
     writer.add_scalar("SSIM/test", np.mean(ssim), itr)
+    writer.add_scalar("SSIM-Image/test", ssim_img / num_frames, itr)
+    writer.add_scalar("SSIM-Plot/test", ssim_plot / num_frames, itr)
