@@ -1,8 +1,10 @@
 import numpy as np
 from numpy import sin, cos, sqrt
 
-# Uses the process shown in fuv_rotation_matrix.pro from fuview
 def transformation_matrix(offset, scsv, sc, psi):
+    """Produces a transformation matrix for the WIC camera using axes' orientations.
+    Taken from fuv_rotation_matrix.pro from fuview.
+    """
     t1a = np.array([
         [cos(offset[2]), -sin(offset[2]), 0],
         [sin(offset[2]), cos(offset[2]), 0],

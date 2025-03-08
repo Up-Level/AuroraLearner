@@ -4,9 +4,12 @@ from PIL import Image
 
 from wic_look_angle import transformation_matrix
 
-def cartToLatLon(coords):
+EARTH_RADIUS = 6371
+
+def cart_latlon(coords):
+    """Converts cartesian coordinates to latitude/longitude."""
     return np.array([
-        np.arccos(coords[2] / earth_radius),
+        np.arccos(coords[2] / EARTH_RADIUS),
         np.pi/2 - np.arctan2(coords[1], coords[0])
     ])
 
@@ -16,8 +19,6 @@ cdf_vars = ["WIC_PIXELS", "EPOCH", "ORB_X", "ORB_Y", "ORB_Z", "VFOV", "SV_X", "S
 data = {}
 for var in cdf_vars:
     data[var] = cdf.varget(var)
-
-earth_radius = 6371
 
 wic_pixels = data["WIC_PIXELS"]
 # Ensure all values >0 for log
@@ -36,7 +37,7 @@ for i in range(wic_pixels.shape[0]):
     #pos = np.array([0, 7000, 30000])
 
     # c is constant per pixel
-    c = np.dot(pos, pos) - (earth_radius ** 2)
+    c = np.dot(pos, pos) - (EARTH_RADIUS ** 2)
 
     scsv = np.array([
         data["SCSV_X"][i],
@@ -48,7 +49,7 @@ for i in range(wic_pixels.shape[0]):
         data["SV_Y"][i],
         data["SV_Z"][i]
     ])
-    
+
     psi = np.deg2rad(data["SPINPHASE"][i])
 
     matrix = transformation_matrix(offset, scsv, sc, psi)
@@ -79,8 +80,8 @@ for i in range(wic_pixels.shape[0]):
             if discriminant >= 0:
                 root = (-b + np.sqrt(discriminant)) / (2 * a)
                 pixel_cart[x][y] = pos + root * direction
-                pixel_latlon[x][y] = np.array([0, *cartToLatLon(pixel_cart[x][y])])
-                
+                pixel_latlon[x][y] = np.array([0, *cart_latlon(pixel_cart[x][y])])
+       
     image_cart = ((pixel_cart - pixel_cart.min()) / (pixel_cart.max() - pixel_cart.min() + 0.00001) * 255).astype(np.uint8)
     #image_cart = image_cart.reshape((image_cart.shape[0], image_cart.shape[1] * image_cart.shape[2]))
 

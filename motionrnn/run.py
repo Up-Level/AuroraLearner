@@ -4,12 +4,12 @@ import os
 import shutil
 import argparse
 import numpy as np
-import math
+from torch.utils.tensorboard import SummaryWriter
+
 from core.data_provider import datasets_factory
 from core.models.model_factory import Model
 from core.utils import preprocess
-from torch.utils.tensorboard import SummaryWriter
-import core.trainer as trainer
+from core import trainer
 
 # -----------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description='PyTorch video prediction model - PredRNN')
@@ -134,7 +134,7 @@ def test_wrapper(model):
     model.load(args.pretrained_model)
     test_input_handle = datasets_factory.data_provider(
         args.dataset_name, args.train_data_paths, args.valid_data_paths, args.batch_size, args.img_width,
-        seq_length=args.total_length, is_training=False)
+        seq_length=args.total_length, input_length=args.input_length, is_training=False)
     trainer.test(model, test_input_handle, args, 'test_result', writer)
 
 

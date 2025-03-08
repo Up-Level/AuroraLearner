@@ -1,6 +1,6 @@
+import time
 import numpy as np
 import cdflib
-import time
 
 cdf = cdflib.CDF("im_hks_ast_20010913000043_20010913235814_cdaweb.cdf")
 
