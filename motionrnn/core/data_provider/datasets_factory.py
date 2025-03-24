@@ -18,7 +18,7 @@ def data_provider(dataset_name, train_data_paths, valid_data_paths, batch_size,
                             'seq_length': seq_length,
                             'input_length': input_length,
                             'input_data_type': 'float32',
-                            'channel': 1,
+                            'channel': 3,
                             'name': 'polar2'}
 
         input_handle = datasets_map[dataset_name].DataProcess()
@@ -31,7 +31,7 @@ def data_provider(dataset_name, train_data_paths, valid_data_paths, batch_size,
                        'seq_length': seq_length,
                        'input_length': input_length,
                        'input_data_type': 'float32',
-                       'channel': 1,
+                       'channel': 3,
                        'name': 'polar2'}
 
             train_input_handle = input_handle.get_train_input_handle(train_input_param)

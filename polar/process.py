@@ -5,12 +5,13 @@ import time
 import numpy as np
 from PIL import Image
 from PIL.Image import Resampling
+import cv2
 
 TRAIN_FRAC = 0.8
 IMAGE_SIZE = 120
 PLOT_HEIGHT = 16
 
-def plot_image(x: np.ndarray, ys: np.ndarray, y_size = 32):
+def plot_image(x: np.ndarray, ys: np.ndarray, y_size = 16):
     """Generate a multiple-line graph with a length equal to the shape of given x values."""
 
     plot = np.zeros((x.shape[0], y_size), dtype=np.uint8)
@@ -83,7 +84,7 @@ def process_images():
 
     for sequence_file in sequence_files:
         image_files = os.listdir(f"polar/images_raw/{sequence_file}")
-        sequence = np.zeros((len(image_files), IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)
+        sequence = np.zeros((len(image_files), IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.uint8)
         seq_timestamps = np.zeros((len(image_files)))
 
         for i, image_file in enumerate(image_files):
@@ -93,8 +94,16 @@ def process_images():
             # This resizes them to their correct resolution
             image = image.resize((IMAGE_SIZE, IMAGE_SIZE), Resampling.NEAREST)
             # Take just the R channel as the image is greyscale
-            sequence[i] = np.array(image.getdata(0)).reshape(IMAGE_SIZE, IMAGE_SIZE)
+            greyscale = np.array(image.getdata(0), dtype=np.uint8).reshape(IMAGE_SIZE, IMAGE_SIZE)
+            # Multiply values by an arbitrary value to boost range. Ideally this would result in
+            # the maximum value being 255 across the entire dataset but the multiplier for this
+            # cannot be found ahead of time.
+            greyscale = np.array(greyscale * 1.5, dtype=np.uint8)
             image.close()
+
+            # Apply colourmap
+            sequence[i] = cv2.applyColorMap(greyscale, cv2.COLORMAP_HOT)
+            sequence[i] = cv2.cvtColor(sequence[i], cv2.COLOR_BGR2RGB)
 
             # Convert date to unix epoch
             seq_timestamps[i] = time.mktime(time.strptime(image_file, "%Y%m%d_%H%M%S_a.gif"))
@@ -117,7 +126,8 @@ def combine(indices, sequences, timestamps, size_plot, plot_index_names, dataset
         dataset.append(np.zeros((
             sequences[i].shape[0],
             IMAGE_SIZE + PLOT_HEIGHT,
-            IMAGE_SIZE + PLOT_HEIGHT),
+            IMAGE_SIZE + PLOT_HEIGHT,
+            sequences[i].shape[-1]),
         np.uint8))
         # Finds the values in indices which are closest to the
         # timestamps of the images in the sequence
@@ -133,12 +143,14 @@ def combine(indices, sequences, timestamps, size_plot, plot_index_names, dataset
             )
             graph = np.pad(graph, [
                 (0, IMAGE_SIZE + PLOT_HEIGHT - (closest_index-start_index)),
-                (0, 0)
+                (0, 0),
             ])
-            sequence = np.pad(sequences[i][j], [(0, PLOT_HEIGHT), (0, 0)])
+            # Convert from greyscale to RGB
+            graph = graph.reshape((*graph.shape, 1)).repeat(3, axis=-1)
+            sequence = np.pad(sequences[i][j], [(0, PLOT_HEIGHT), (0, 0), (0, 0)])
 
-            dataset[i][j] = np.concatenate([sequence, graph], axis=1).T
-            #Image.fromarray(dataset[i][j], "L").save(f"polar/images/{i}_{j}.png")
+            dataset[i][j] = np.concatenate([sequence, graph], axis=1).transpose([1, 0, 2])
+            #Image.fromarray(dataset[i][j], "RGB").save(f"polar/images/{i}_{j}.png")
 
         print(f"{i + 1}/{sequences.shape[0]} - {(i + 1) * 100 // sequences.shape[0]}%")
 
@@ -162,6 +174,14 @@ def main():
         case "images":
             sequences, timestamps = process_images()
             np.savez_compressed("polar/images.npz", sequences=sequences, timestamps=timestamps)
+
+            train_index = int(sequences.shape[0] * TRAIN_FRAC)
+            np.random.shuffle(sequences)
+            np.savez_compressed(f"polar/datasets/images-train.npz",
+                                sequences[:train_index])
+            np.savez_compressed(f"polar/datasets/images-test.npz",
+                                sequences[ train_index:sequences.shape[0]])
+
         case "combine":
             indices: dict = np.load("polar/indices.npz")
             images: dict = np.load("polar/images.npz", allow_pickle=True)

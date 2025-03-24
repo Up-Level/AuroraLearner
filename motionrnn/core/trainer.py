@@ -32,8 +32,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
     batch_id = 0
     img_mse, ssim = [], []
     csi20, csi30, csi40, csi50 = [], [], [], []
-    ssim_img = 0
-    ssim_plot = 0
+    if configs.img_width == 136:
+        ssim_img = 0
+        ssim_plot = 0
 
     for i in range(test_input_handle.total_length - configs.input_length):
         img_mse.append(0)
@@ -86,8 +87,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 score = structural_similarity(pred_frm[b], real_frm[b], channel_axis=-1)
                 ssim[i] += score
 
-                ssim_img += structural_similarity(pred_frm[b, :120, :120], real_frm[b, :120, :120], channel_axis=-1)
-                ssim_plot += structural_similarity(pred_frm[b, 120:, :120], real_frm[b, 120:, :120], channel_axis=-1)
+                if configs.img_width == 136:
+                    ssim_img += structural_similarity(pred_frm[b, :120, :120], real_frm[b, :120, :120], channel_axis=-1)
+                    ssim_plot += structural_similarity(pred_frm[b, 120:, :120], real_frm[b, 120:, :120], channel_axis=-1)
 
         # save prediction examples
         if batch_id <= configs.num_save_samples:
@@ -97,7 +99,11 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 name = 'gt' + str(i + 1) + '.png'
                 file_name = os.path.join(path, name)
                 img_gt = np.uint8(test_ims[0, i, :, :, :] * 255)
-                cv2.imwrite(file_name, img_gt)
+                cv2.imwrite(file_name, cv2.cvtColor(img_gt, cv2.COLOR_BGR2RGB))
+
+                """img_gt = np.uint8(test_ims[0, i, :, :, :] * 255 / np.max(test_ims))
+                colormap = cv2.applyColorMap(img_gt, cv2.COLORMAP_OCEAN)
+                cv2.imwrite(file_name, colormap)"""
             for i in range(img_gen_length):
                 name = 'pd' + str(i + 1 + configs.input_length) + '.png'
                 file_name = os.path.join(path, name)
@@ -105,12 +111,19 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 img_pd = np.maximum(img_pd, 0)
                 img_pd = np.minimum(img_pd, 1)
                 img_pd = np.uint8(img_pd * 255)
-                cv2.imwrite(file_name, img_pd)
+                cv2.imwrite(file_name, cv2.cvtColor(img_pd, cv2.COLOR_BGR2RGB))
+
+                """img_pd = np.uint8(img_pd * 255 / np.max(test_ims))
+                colormap = cv2.applyColorMap(img_pd, cv2.COLORMAP_OCEAN)
+                cv2.imwrite(file_name, colormap)"""
         
             # Join first few known frames with predicted frames
             total_img = np.concatenate([test_ims[:, :configs.input_length], img_gen], axis=1)
-            # Transform to RGB and reorder axes to required format
-            video = total_img.repeat(3, axis=-1).transpose([0, 1, 4, 2, 3])
+            if total_img.shape[-1] == 1:
+                # If greyscale convert to RGB
+                total_img = total_img.repeat(3, axis=-1)
+            # Reorder axes to required format
+            video = total_img.transpose([0, 1, 4, 2, 3])
             writer.add_video(f"Prediction/test/{batch_id}", video, itr, fps=0.001)    
 
         test_input_handle.next()
@@ -146,6 +159,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
     num_frames = batch_id * configs.batch_size * (configs.total_length - configs.input_length)
 
     writer.add_scalar("Loss/test", avg_mse, itr)
-    writer.add_scalar("SSIM/test", np.mean(ssim), itr)
-    writer.add_scalar("SSIM-Image/test", ssim_img / num_frames, itr)
-    writer.add_scalar("SSIM-Plot/test", ssim_plot / num_frames, itr)
+    if configs.img_width == 136:
+        writer.add_scalar("SSIM/test", np.mean(ssim), itr)
+        writer.add_scalar("SSIM-Image/test", ssim_img / num_frames, itr)
+        writer.add_scalar("SSIM-Plot/test", ssim_plot / num_frames, itr)
+    else:
+        writer.add_scalar("SSIM-Image/test", np.mean(ssim), itr)

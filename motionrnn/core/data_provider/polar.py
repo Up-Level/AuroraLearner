@@ -68,8 +68,7 @@ class DataProcess:
 
         for i, sequence in enumerate(dataset):
             sequence = sequence[:5].astype(np.float32) / 255
-            # Add sequence to data, reshaping to add channel
-            data.append(sequence.reshape(*sequence.shape, 1))
+            data.append(sequence)
             seq_lengths.append(sequence.shape[0])
 
             if i > 0:
@@ -92,8 +91,7 @@ class DataProcess:
 
         for i, sequence in enumerate(dataset):
             sequence = sequence[:5].astype(np.float32) / 255
-            # Add sequence to data, reshaping to add channel
-            data.append(sequence.reshape(*sequence.shape, 1))
+            data.append(sequence)
             seq_lengths.append(sequence.shape[0])
 
             if i > 0:
