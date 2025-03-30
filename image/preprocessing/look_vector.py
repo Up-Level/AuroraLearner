@@ -2,7 +2,7 @@ import time
 import numpy as np
 import cdflib
 
-cdf = cdflib.CDF("im_hks_ast_20010913000043_20010913235814_cdaweb.cdf")
+cdf = cdflib.CDF("image/preprocessing/im_hks_ast_20010913000043_20010913235814_cdaweb.cdf")
 
 cdf_vars = ['Epoch', 'BS_QUATQ1', 'BS_QUATQ2', 'BS_QUATQ3', 'BS_QUATQ4', 'BS_ATTUNCX', 'BS_ATTUNCY', 'BS_ATTUNCZ', 'BS_RMSERR', 'BS_INTTIME']
 data = {}

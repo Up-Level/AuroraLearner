@@ -1,3 +1,5 @@
+"""A CLI to process the raw polar images and indices into datasets."""
+
 import csv
 import sys
 import os
@@ -177,9 +179,9 @@ def main():
 
             train_index = int(sequences.shape[0] * TRAIN_FRAC)
             np.random.shuffle(sequences)
-            np.savez_compressed(f"polar/datasets/images-train.npz",
+            np.savez_compressed("polar/datasets/images-train.npz",
                                 sequences[:train_index])
-            np.savez_compressed(f"polar/datasets/images-test.npz",
+            np.savez_compressed("polar/datasets/images-test.npz",
                                 sequences[ train_index:sequences.shape[0]])
 
         case "combine":

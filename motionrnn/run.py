@@ -1,5 +1,6 @@
 __author__ = 'yunbo'
 
+import time
 import os
 import shutil
 import argparse
@@ -58,7 +59,10 @@ parser.add_argument('--num_save_samples', type=int, default=10)
 parser.add_argument('--n_gpu', type=int, default=1)
 
 args = parser.parse_args()
-writer = SummaryWriter()
+
+dataset_name = args.gen_frm_dir.replace("results/", "")
+datetime = time.strftime("%Y-%m-%d %H-%M-%S", time.gmtime(time.time()))
+writer = SummaryWriter(f"runs/{dataset_name}/{datetime}")
 
 def schedule_sampling(eta, itr, batch_shape):
     zeros = np.zeros((args.batch_size,
@@ -103,9 +107,7 @@ def train_wrapper(model):
     if args.pretrained_model:
         model.load(args.pretrained_model)
     # load data
-    train_input_handle, test_input_handle = datasets_factory.data_provider(
-        args.dataset_name, args.train_data_paths, args.valid_data_paths, args.batch_size, args.img_width,
-        seq_length=args.total_length, input_length=args.input_length, is_training=True)
+    train_input_handle, test_input_handle = datasets_factory.data_provider(args, is_training=True)
 
     eta = args.sampling_start_value
 
@@ -132,9 +134,7 @@ def train_wrapper(model):
 
 def test_wrapper(model):
     model.load(args.pretrained_model)
-    test_input_handle = datasets_factory.data_provider(
-        args.dataset_name, args.train_data_paths, args.valid_data_paths, args.batch_size, args.img_width,
-        seq_length=args.total_length, input_length=args.input_length, is_training=False)
+    test_input_handle = datasets_factory.data_provider(args, is_training=False)
     trainer.test(model, test_input_handle, args, 'test_result', writer)
 
 

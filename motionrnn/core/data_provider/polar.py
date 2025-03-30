@@ -75,6 +75,8 @@ class DataProcess:
                 indices.append(indices[-1] + sequence.shape[0])
 
         data = np.concatenate(data, axis=0)
+        if (input_param["channel"] == 1):
+            data = data.reshape((*data.shape, 1))
         indices = np.array(indices)
         input_param["seq_lengths"] = np.array(seq_lengths)
         print("TRAIN", data.shape, indices.shape)
@@ -101,6 +103,8 @@ class DataProcess:
                 max_length = sequence.shape[0]
 
         data = np.concatenate(data, axis=0)
+        if (input_param["channel"] == 1):
+            data = data.reshape((*data.shape, 1))
         indices = np.array(indices)
         input_param["seq_length"] = max_length
         input_param["seq_lengths"] = np.array(seq_lengths)
