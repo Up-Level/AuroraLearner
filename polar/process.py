@@ -77,16 +77,17 @@ def process_indices():
 
     return data
 
-def process_images():
+def process_images(is_greyscale=False):
     """Reads the images from polar/images_raw and generates the images.npz file."""
 
     sequence_files = os.listdir("polar/images_raw")
-    sequences = list()
-    timestamps = list()
+    sequences = []
+    timestamps = []
+    num_channels = 1 if is_greyscale else 3
 
     for sequence_file in sequence_files:
         image_files = os.listdir(f"polar/images_raw/{sequence_file}")
-        sequence = np.zeros((len(image_files), IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.uint8)
+        sequence = np.zeros((len(image_files), IMAGE_SIZE, IMAGE_SIZE, num_channels), dtype=np.uint8)
         seq_timestamps = np.zeros((len(image_files)))
 
         for i, image_file in enumerate(image_files):
@@ -104,8 +105,11 @@ def process_images():
             image.close()
 
             # Apply colourmap
-            sequence[i] = cv2.applyColorMap(greyscale, cv2.COLORMAP_HOT)
-            sequence[i] = cv2.cvtColor(sequence[i], cv2.COLOR_BGR2RGB)
+            if is_greyscale:
+                sequence[i] = greyscale.reshape((*greyscale.shape, 1))
+            else:
+                sequence[i] = cv2.applyColorMap(greyscale, cv2.COLORMAP_HOT)
+                sequence[i] = cv2.cvtColor(sequence[i], cv2.COLOR_BGR2RGB)
 
             # Convert date to unix epoch
             seq_timestamps[i] = time.mktime(time.strptime(image_file, "%Y%m%d_%H%M%S_a.gif"))
@@ -134,6 +138,7 @@ def combine(indices, sequences, timestamps, size_plot, plot_index_names, dataset
         # Finds the values in indices which are closest to the
         # timestamps of the images in the sequence
         closest_indices = np.searchsorted(indices["Date_UTC"], timestamps[i])
+
         for j in range(sequences[i].shape[0]):
             closest_index = closest_indices[j]
             start_index = max(closest_index - size_plot, 0)
@@ -147,8 +152,11 @@ def combine(indices, sequences, timestamps, size_plot, plot_index_names, dataset
                 (0, IMAGE_SIZE + PLOT_HEIGHT - (closest_index-start_index)),
                 (0, 0),
             ])
-            # Convert from greyscale to RGB
-            graph = graph.reshape((*graph.shape, 1)).repeat(3, axis=-1)
+            graph = graph.reshape((*graph.shape, 1))
+            # Convert graph from greyscale to RGB
+            if sequences[i].shape[-1] == 3:
+                graph = graph.repeat(3, axis=-1)
+
             sequence = np.pad(sequences[i][j], [(0, PLOT_HEIGHT), (0, 0), (0, 0)])
 
             dataset[i][j] = np.concatenate([sequence, graph], axis=1).transpose([1, 0, 2])
@@ -174,14 +182,18 @@ def main():
             indices = process_indices()
             np.savez_compressed("polar/indices.npz", **indices)
         case "images":
-            sequences, timestamps = process_images()
+            greyscale = len(sys.argv[2]) >= 2 and sys.argv[2] == "gs"
+
+            sequences, timestamps = process_images(greyscale)
             np.savez_compressed("polar/images.npz", sequences=sequences, timestamps=timestamps)
 
             train_index = int(sequences.shape[0] * TRAIN_FRAC)
             np.random.shuffle(sequences)
-            np.savez_compressed("polar/datasets/images-train.npz",
+
+            dataset_dir = "polar/datasets/gs" if greyscale else "polar/datasets"
+            np.savez_compressed(f"{dataset_dir}/images-train.npz",
                                 sequences[:train_index])
-            np.savez_compressed("polar/datasets/images-test.npz",
+            np.savez_compressed(f"{dataset_dir}/images-test.npz",
                                 sequences[ train_index:sequences.shape[0]])
 
         case "combine":

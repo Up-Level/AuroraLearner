@@ -16,8 +16,8 @@ function Test {
         --model_name MotionRNN_PredRNN `
         --pretrained_model ./checkpoints/"$Checkpoint" `
         --reverse_input 1 `
-        --img_height 136 `
-        --img_width 136 `
+        --img_height 120 `
+        --img_width 120 `
         --img_channel 1 `
         --input_length 3 `
         --total_length 5 `
@@ -40,11 +40,5 @@ function Test {
 
 echo "Running $numTests tests"
 for ($i=0; $i -lt $numTests; $i++) {
-    #Test sml polar/sml/model.ckpt-10000
-    Test sml polar-gs/sml/model.ckpt-1000
-    Test sml-smu polar-gs/sml-smu/model.ckpt-1000
-    Test bz polar-gs/bz/model.ckpt-1000
-    Test imf polar-gs/imf/model.ckpt-1000
-    Test wind polar-gs/wind/model.ckpt-1000
-    Test all polar-gs/all/model.ckpt-1000
+    Test images polar-gs-10000/model.ckpt-10000
 }

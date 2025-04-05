@@ -1,0 +1,7 @@
+torch
+torchvision
+scikit-image
+pillow
+opencv-python
+tensorboard
+moviepy==1.0.3

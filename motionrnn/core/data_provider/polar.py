@@ -75,7 +75,8 @@ class DataProcess:
                 indices.append(indices[-1] + sequence.shape[0])
 
         data = np.concatenate(data, axis=0)
-        if (input_param["channel"] == 1):
+        # If data does not have a channel dimension
+        if data.ndim == 3:
             data = data.reshape((*data.shape, 1))
         indices = np.array(indices)
         input_param["seq_lengths"] = np.array(seq_lengths)
@@ -103,7 +104,8 @@ class DataProcess:
                 max_length = sequence.shape[0]
 
         data = np.concatenate(data, axis=0)
-        if (input_param["channel"] == 1):
+        # If data does not have a channel dimension
+        if data.ndim == 3:
             data = data.reshape((*data.shape, 1))
         indices = np.array(indices)
         input_param["seq_length"] = max_length
