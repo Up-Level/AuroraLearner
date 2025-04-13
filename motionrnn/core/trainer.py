@@ -32,8 +32,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
     batch_id = 0
     img_mse, ssim = [], []
     csi20, csi30, csi40, csi50 = [], [], [], []
+
+    ssim_nightside = 0
     if configs.img_width == 136:
-        ssim_nightside = 0
         ssim_img = 0
         ssim_plot = 0
     iteration_name = itr if isinstance(itr, int) else None
@@ -92,8 +93,8 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 ssim[i] += score
                 ssim_images[b, i] = full
 
+                ssim_nightside += structural_similarity(pred_frm[b, :120, 60:120], real_frm[b, :120, 60:120], channel_axis=-1)
                 if configs.img_width == 136:
-                    ssim_nightside += structural_similarity(pred_frm[b, :120, 60:120], real_frm[b, :120, 60:120], channel_axis=-1)
                     ssim_img += structural_similarity(pred_frm[b, :120, :120], real_frm[b, :120, :120], channel_axis=-1)
                     ssim_plot += structural_similarity(pred_frm[b, 120:, :120], real_frm[b, 120:, :120], channel_axis=-1)
 
@@ -177,9 +178,9 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
     num_frames = batch_id * configs.batch_size * (configs.total_length - configs.input_length)
 
     writer.add_scalar("Loss/test", avg_mse, iteration_name)
+    writer.add_scalar("SSIM/nightside", ssim_nightside / num_frames, iteration_name)
     if configs.img_width == 136:
         writer.add_scalar("SSIM/full", np.mean(ssim), iteration_name)
-        writer.add_scalar("SSIM/nightside", ssim_nightside / num_frames, iteration_name)
         writer.add_scalar("SSIM/image", ssim_img / num_frames, iteration_name)
         writer.add_scalar("SSIM/plot", ssim_plot / num_frames, iteration_name)
     else:

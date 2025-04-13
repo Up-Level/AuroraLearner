@@ -1,4 +1,3 @@
-Set-Variable CUDA_VISIBLE_DEVICES=0
 function Train {
     param ($DatasetName)
     python -u motionrnn/run.py `

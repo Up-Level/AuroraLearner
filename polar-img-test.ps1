@@ -2,7 +2,6 @@ param (
     [int]$numTests = 1
 )
 
-Set-Variable CUDA_VISIBLE_DEVICES=0
 function Test {
     param ($DatasetName, $Checkpoint)
     python -u motionrnn/run.py `
@@ -40,5 +39,5 @@ function Test {
 
 echo "Running $numTests tests"
 for ($i=0; $i -lt $numTests; $i++) {
-    Test images polar-gs-10000/model.ckpt-10000
+    Test images polar-gs/images/model.ckpt-1000
 }

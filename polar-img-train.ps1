@@ -1,12 +1,11 @@
-Set-Variable CUDA_VISIBLE_DEVICES=0
 python -u motionrnn/run.py `
     --is_training 1 `
     --device cuda `
     --dataset_name polar `
     --train_data_paths ./polar/datasets/gs/images-train.npz `
     --valid_data_paths ./polar/datasets/gs/images-test.npz `
-    --save_dir checkpoints/polar-gs/images `
-    --gen_frm_dir results/polar-gs/images `
+    --save_dir checkpoints/polar-gs/images2 `
+    --gen_frm_dir results/polar-gs/images2 `
     --model_name MotionRNN_PredRNN `
     --reverse_input 1 `
     --img_height 120 `
@@ -24,7 +23,7 @@ python -u motionrnn/run.py `
     --sampling_start_value 1.0 `
     --sampling_changing_rate 0.00002 `
     --lr 0.0003 `
-    --batch_size 96 `
+    --batch_size 32 `
     --max_iterations 1000 `
     --display_interval 100 `
     --test_interval 100 `

@@ -80,18 +80,18 @@ def process_indices():
 def process_images(is_greyscale=False):
     """Reads the images from polar/images_raw and generates the images.npz file."""
 
-    sequence_files = os.listdir("polar/images_raw")
+    sequence_dirs = os.listdir("polar/images_raw")
     sequences = []
     timestamps = []
     num_channels = 1 if is_greyscale else 3
 
-    for sequence_file in sequence_files:
-        image_files = os.listdir(f"polar/images_raw/{sequence_file}")
+    for sequence_dir in sequence_dirs:
+        image_files = os.listdir(f"polar/images_raw/{sequence_dir}")
         sequence = np.zeros((len(image_files), IMAGE_SIZE, IMAGE_SIZE, num_channels), dtype=np.uint8)
         seq_timestamps = np.zeros((len(image_files)))
 
         for i, image_file in enumerate(image_files):
-            image = Image.open(f"polar/images_raw/{sequence_file}/{image_file}")
+            image = Image.open(f"polar/images_raw/{sequence_dir}/{image_file}")
 
             # Raw images have been upscaled by 2x for some reason.
             # This resizes them to their correct resolution
@@ -104,10 +104,10 @@ def process_images(is_greyscale=False):
             greyscale = np.array(greyscale * 1.5, dtype=np.uint8)
             image.close()
 
-            # Apply colourmap
             if is_greyscale:
                 sequence[i] = greyscale.reshape((*greyscale.shape, 1))
             else:
+                # Apply colourmap
                 sequence[i] = cv2.applyColorMap(greyscale, cv2.COLORMAP_HOT)
                 sequence[i] = cv2.cvtColor(sequence[i], cv2.COLOR_BGR2RGB)
 
@@ -187,8 +187,14 @@ def main():
             sequences, timestamps = process_images(greyscale)
             np.savez_compressed("polar/images.npz", sequences=sequences, timestamps=timestamps)
 
+            # Create an images-only dataset
+
             train_index = int(sequences.shape[0] * TRAIN_FRAC)
             np.random.shuffle(sequences)
+            # Need to transpose the images sequence by sequence as the sequences array has
+            # an unequal second dimension
+            for i, sequence in enumerate(sequences):
+                sequences[i] = sequence.transpose([0, 2, 1, 3])
 
             dataset_dir = "polar/datasets/gs" if greyscale else "polar/datasets"
             np.savez_compressed(f"{dataset_dir}/images-train.npz",

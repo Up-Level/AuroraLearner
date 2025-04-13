@@ -146,8 +146,6 @@ if os.path.exists(args.gen_frm_dir):
     shutil.rmtree(args.gen_frm_dir)
 os.makedirs(args.gen_frm_dir)
 
-# gpu_list = np.asarray(os.environ.get('CUDA_VISIBLE_DEVICES', '-1').split(','), dtype=np.int32)
-# args.n_gpu = len(gpu_list)
 print('Initializing models')
 
 model = Model(args)
