@@ -2,8 +2,10 @@
 **/*.cdf
 **/*.npz
 **/*.csv
-**/*.gif
-images
+polar/images_raw
+image/preprocessing/images
+image/preprocessing/cart
+image/preprocessing/latlon
 latlon
 cart
 checkpoints
