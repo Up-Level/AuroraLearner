@@ -106,7 +106,7 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 name = 'gt' + str(i + 1) + '.png'
                 file_name = os.path.join(path, name)
                 img_gt = np.uint8(test_ims[0, i, :, :, :] * 255)
-                img_gt = cv2.cvtColor(img_gt, cv2.COLOR_BGR2RGB) if img_gt.shape[-1] == 1 else img_gt
+                img_gt = cv2.cvtColor(img_gt, cv2.COLOR_BGR2RGB) if img_gt.shape[-1] != 1 else img_gt
                 cv2.imwrite(file_name, img_gt)
 
             for i in range(img_gen_length):
@@ -116,7 +116,7 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 img_pd = np.maximum(img_pd, 0)
                 img_pd = np.minimum(img_pd, 1)
                 img_pd = np.uint8(img_pd * 255)
-                img_pd = cv2.cvtColor(img_pd, cv2.COLOR_BGR2RGB) if img_pd.shape[-1] == 1 else img_pd
+                img_pd = cv2.cvtColor(img_pd, cv2.COLOR_BGR2RGB) if img_pd.shape[-1] != 1 else img_pd
                 cv2.imwrite(file_name, img_pd)
 
             for i in range(output_length):
@@ -126,7 +126,7 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 img_ssim = np.maximum(img_ssim, 0)
                 img_ssim = np.minimum(img_ssim, 1)
                 img_ssim = np.uint8(img_ssim * 255)
-                img_ssim = cv2.cvtColor(img_ssim, cv2.COLOR_BGR2RGB) if img_ssim.shape[-1] == 1 else img_ssim
+                img_ssim = cv2.cvtColor(img_ssim, cv2.COLOR_BGR2RGB) if img_ssim.shape[-1] != 1 else img_ssim
                 cv2.imwrite(file_name, img_ssim)
 
             # Join first few known frames with predicted frames
@@ -143,7 +143,7 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
                 if ssim_comparison.shape[-1] == 1:
                     # If greyscale convert to RGB
                     ssim_comparison = ssim_comparison.repeat(3, axis=-1)
-                writer.add_images(f"SSIM-Comparison/{batch_id}", ssim_comparison.transpose([0, 3, 1, 2]), i)
+                writer.add_images(f"SSIM-Comparison/{batch_id}/{i}", ssim_comparison.transpose([0, 3, 1, 2]), iteration_name)
 
         test_input_handle.next()
 

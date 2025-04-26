@@ -1,7 +1,3 @@
-param (
-    [int]$numTests = 1
-)
-
 function Test {
     param ($DatasetName, $Checkpoint)
     python -u motionrnn/run.py `
@@ -37,7 +33,4 @@ function Test {
         --snapshot_interval 100
 }
 
-echo "Running $numTests tests"
-for ($i=0; $i -lt $numTests; $i++) {
-    Test images polar-gs/images/model.ckpt-1000
-}
+Test images polar-gs/images/model.ckpt-1000

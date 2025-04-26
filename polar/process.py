@@ -182,7 +182,7 @@ def main():
             indices = process_indices()
             np.savez_compressed("polar/indices.npz", **indices)
         case "images":
-            greyscale = len(sys.argv[2]) >= 2 and sys.argv[2] == "gs"
+            greyscale = len(sys.argv) >= 2 and sys.argv[2] == "gs"
 
             sequences, timestamps = process_images(greyscale)
             np.savez_compressed("polar/images.npz", sequences=sequences, timestamps=timestamps)
