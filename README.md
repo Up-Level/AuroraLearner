@@ -1,7 +1,8 @@
 # AuroraLearner
 Code to preprocess auroral images from the Polar spacecraft and magnetic index data, and a modified [MotionRNN](https://arxiv.org/abs/2103.02243) framework to train and test on these images. Partial code is also given to process images taken from the IMAGE spacecraft.
 
-An example of a preprocessed image with a line graph of the SML index is shown below:
+An example of a preprocessed image with a line graph of the SMU index is shown below:
+
 ![Polar Combined](images/Polar_combined.png)
 
 ## Results
