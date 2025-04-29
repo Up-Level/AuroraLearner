@@ -139,6 +139,7 @@ def test(model, test_input_handle, configs, itr, writer: SummaryWriter):
             writer.add_video(f"Prediction/test/{batch_id}", video, iteration_name, fps=0.001)
 
             for i in range(output_length):
+                # Concatenate real, predicted and SSIM images together
                 ssim_comparison = np.concatenate([test_ims[:, configs.input_length + i], img_gen[:, i], ssim_images[:, i]], axis=2)
                 if ssim_comparison.shape[-1] == 1:
                     # If greyscale convert to RGB

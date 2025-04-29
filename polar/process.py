@@ -46,7 +46,7 @@ def plot_image(x: np.ndarray, ys: np.ndarray, y_size = 16):
 def process_indices():
     """Reads the csv files in polar/indices and generates the indices.npz file."""
 
-    files = ["1996.csv", "1997.csv", "1998.csv", "1999.csv", "2000.csv"]
+    files = os.listdir("polar/indices")
     labels = ['Date_UTC', 'SML', 'SMU', 'GSE_Bx', 'GSE_By', 'GSE_Bz', 'GSE_Vx', 'GSE_Vy', 'GSE_Vz', 'CLOCK_ANGLE_GSE']
     data = {}
     for label in labels:
@@ -197,6 +197,9 @@ def main():
                 sequences[i] = sequence.transpose([0, 2, 1, 3])
 
             dataset_dir = "polar/datasets/gs" if greyscale else "polar/datasets"
+            if not os.path.isdir(dataset_dir):
+                os.makedirs(dataset_dir)
+
             np.savez_compressed(f"{dataset_dir}/images-train.npz",
                                 sequences[:train_index])
             np.savez_compressed(f"{dataset_dir}/images-test.npz",
@@ -218,17 +221,17 @@ def main():
             combine_args = (indices, sequences, timestamps, size_plot)
 
             print("SML 1/6")
-            combine(*combine_args, ["SML"], "sml")
+            combine(*combine_args, ["SML"], "gs/sml")
             print("SML/SMU 2/6")
-            combine(*combine_args, ["SML", "SMU"], "sml-smu")
+            combine(*combine_args, ["SML", "SMU"], "gs/sml-smu")
             print("Bz 3/6")
-            combine(*combine_args, ["GSE_Bz"], "bz")
+            combine(*combine_args, ["GSE_Bz"], "gs/bz")
             print("IMF 4/6")
-            combine(*combine_args, ["GSE_Bx", "GSE_By", "GSE_Bz"], "imf")
+            combine(*combine_args, ["GSE_Bx", "GSE_By", "GSE_Bz"], "gs/imf")
             print("Solar Wind 5/6")
-            combine(*combine_args, ["GSE_Vx", "GSE_Vy"], "wind")
+            combine(*combine_args, ["GSE_Vx", "GSE_Vy"], "gs/wind")
             print("All 6/6")
-            combine(*combine_args,['SML', 'SMU', 'GSE_Bx', 'GSE_By', 'GSE_Bz', 'GSE_Vx', 'GSE_Vy', 'GSE_Vz', 'CLOCK_ANGLE_GSE'], "all")
+            combine(*combine_args,['SML', 'SMU', 'GSE_Bx', 'GSE_By', 'GSE_Bz', 'GSE_Vx', 'GSE_Vy', 'GSE_Vz', 'CLOCK_ANGLE_GSE'], "gs/all")
         case _:
             print("Invalid argument. Valid arguments are 'indices', 'images' or 'combine'.")
 

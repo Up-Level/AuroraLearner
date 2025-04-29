@@ -1,11 +1,15 @@
+param (
+    $NumChannel = 1
+)
+
 function Test {
     param ($DatasetName, $Checkpoint)
     python -u motionrnn/run.py `
         --is_training 0 `
-        --device cpu `
+        --device cuda `
         --dataset_name polar `
-        --train_data_paths ./polar/datasets/gs/"$DatasetName-train.npz" `
-        --valid_data_paths ./polar/datasets/gs/"$DatasetName-test.npz" `
+        --train_data_paths ./polar/datasets/"$DatasetName-train.npz" `
+        --valid_data_paths ./polar/datasets/"$DatasetName-test.npz" `
         --save_dir checkpoints/polar/test/"$DatasetName" `
         --gen_frm_dir results/polar/test/"$DatasetName" `
         --model_name MotionRNN_PredRNN `
@@ -13,7 +17,7 @@ function Test {
         --reverse_input 1 `
         --img_height 136 `
         --img_width 136 `
-        --img_channel 1 `
+        --img_channel $NumChannel `
         --input_length 3 `
         --total_length 5 `
         --num_hidden 64,64,64,64 `
@@ -33,9 +37,4 @@ function Test {
         --snapshot_interval 100
 }
 
-Test sml polar-gs/sml/model.ckpt-1000
-Test sml-smu polar-gs/sml-smu/model.ckpt-1000
-Test bz polar-gs/bz/model.ckpt-1000
-Test imf polar-gs/imf/model.ckpt-1000
-Test wind polar-gs/wind/model.ckpt-1000
-Test all polar-gs/all/model.ckpt-1000
+Test gs/sml polar-gs/sml/model.ckpt-1000
