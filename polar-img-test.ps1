@@ -37,4 +37,4 @@ function Test {
         --snapshot_interval 100
 }
 
-Test gs/images polar-gs/images/model.ckpt-1000
+Test gs/images polar/gs/images/model.ckpt-1000

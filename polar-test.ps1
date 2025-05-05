@@ -37,4 +37,9 @@ function Test {
         --snapshot_interval 100
 }
 
-Test gs/sml polar-gs/sml/model.ckpt-1000
+Test gs/sml polar/gs/sml/model.ckpt-1000
+Test gs/sml-smu polar/gs/sml-smu/model.ckpt-1000
+Test gs/bz polar/gs/bz/model.ckpt-1000
+Test gs/imf polar/gs/imf/model.ckpt-1000
+Test gs/wind polar/gs/wind/model.ckpt-1000
+Test gs/all polar/gs/all/model.ckpt-1000
